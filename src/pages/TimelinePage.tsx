@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { SymbolFilter } from "../components/SymbolFilter";
 import { LIQUIDITY_LABEL, REGIME_LABEL } from "../strategy";
 import type { AppState, Observation } from "../types";
 
@@ -7,9 +9,13 @@ type Props = {
 };
 
 export function TimelinePage({ state, onSetCurrent }: Props) {
-  const items = [...state.observations].sort((a, b) =>
-    b.observedAt.localeCompare(a.observedAt),
-  );
+  const symbols = [...new Set(state.observations.map((item) => item.symbol))].sort();
+  const [symbol, setSymbol] = useState("all");
+  const items = state.observations
+    .filter((item) => symbol === "all" || item.symbol === symbol)
+    .sort((a, b) =>
+      b.observedAt.localeCompare(a.observedAt),
+    );
 
   return (
     <section className="page">
@@ -18,23 +24,37 @@ export function TimelinePage({ state, onSetCurrent }: Props) {
           <p className="eyebrow">历史环境</p>
           <h2>环境时间线</h2>
         </div>
+        <SymbolFilter
+          symbols={symbols}
+          value={symbol}
+          onChange={setSymbol}
+          includeAll
+        />
       </header>
-      <ol className="timeline">
-        {items.map((item, i) => {
-          const next = items[i + 1];
-          const changed = Boolean(next && next.regime !== item.regime);
-          return (
-            <TimelineItem
-              key={item.id}
-              item={item}
-              changed={changed}
-              previous={next}
-              isCurrent={item.id === state.currentId}
-              onSetCurrent={onSetCurrent}
-            />
-          );
-        })}
-      </ol>
+      {items.length ? (
+        <ol className="timeline">
+          {items.map((item, i) => {
+            const next = items[i + 1];
+            const changed = Boolean(
+              next && next.symbol === item.symbol && next.regime !== item.regime,
+            );
+            return (
+              <TimelineItem
+                key={item.id}
+                item={item}
+                changed={changed}
+                previous={next}
+                isCurrent={item.id === state.currentIds[item.symbol]}
+                onSetCurrent={onSetCurrent}
+              />
+            );
+          })}
+        </ol>
+      ) : (
+        <div className="empty-card">
+          <p>{symbol === "all" ? "还没有可回看的观察记录。" : `还没有 ${symbol} 的观察记录。`}</p>
+        </div>
+      )}
     </section>
   );
 }
@@ -70,6 +90,7 @@ function TimelineItem({
         <p className="symbol">{item.symbol}</p>
         <p>{item.structure}</p>
         <p className="levels">{item.keyLevels}</p>
+        {item.notes ? <p className="notes">{item.notes}</p> : null}
         {!isCurrent ? (
           <button className="btn ghost small" onClick={() => onSetCurrent(item.id)}>
             设为当前

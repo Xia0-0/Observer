@@ -15,5 +15,5 @@ export type Observation = {
 
 export type AppState = {
   observations: Observation[];
-  currentId: string | null;
+  currentIds: Record<string, string>;
 };

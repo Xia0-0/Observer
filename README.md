@@ -1,32 +1,70 @@
-# React + TypeScript + Vite
+# 观察者 / Observer
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+一个本地优先的个人市场观察工具，用于记录市场环境、回看环境变化，并以交易纪律辅助决策。
 
-Currently, two official plugins are available:
+观察者不提供实时行情、自动分析、交易信号或自动交易。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 启动
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+打开终端显示的地址，通常为 [http://localhost:5173](http://localhost:5173)。
+
+生产构建与本地预览：
+
+```bash
+npm run build
+npm run preview
+```
+
+## 使用方法
+
+### 1. 写入市场观察
+
+进入 **观察记录**，点击 **新建观察**，填写：
+
+- 日期
+- 标的，例如 `BTC`、`XAU`、`NASDAQ`、`CL`
+- 资金环境
+- 行情环境
+- 市场结构
+- 关键位置
+- 备注
+
+保存后，该记录会自动成为该标的的当前观察；不会影响其他标的。
+
+### 2. 查看观察面板
+
+进入 **观察面板**，在标的选择器中选择要查看的市场。面板展示该标的当前记录的环境、资金、结构、关键位置与备注，并按行情环境显示纪律：
+
+- 趋势行情：顺势交易
+- 震荡行情：低吸高抛
+- 环境不明确：观察，不交易
+
+### 3. 回看环境变化
+
+进入 **环境时间线**，按标的筛选历史记录。时间线会显示每次观察的环境、结构、关键位置和备注；同一标的的行情环境发生变化时会标记环境切换。
+
+### 4. 管理当前观察
+
+在 **观察记录** 或 **环境时间线** 中，点击 **设为当前** 可切换某个标的的当前观察。删除某标的的当前记录时，应用只会在该标的剩余记录中选择最新的一条作为当前记录。
+
+## 数据与备份
+
+所有记录只保存在当前浏览器的本地存储中，不会上传到服务器。
+
+- 点击 **导出记录** 下载 `observer-records.json` 备份。
+- 点击 **导入记录** 恢复备份；导入会替换当前浏览器内的记录，因此应用会要求确认。
+- 点击 **清空记录** 前请先导出备份；清空同样需要确认。
+
+建议在清理浏览器数据、更换浏览器或更换设备前先导出备份。
+
+## 开发检查
+
+```bash
+npm run lint
+npm run build
+```

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ObservationForm } from "../components/ObservationForm";
+import { SymbolFilter } from "../components/SymbolFilter";
 import { LIQUIDITY_LABEL, REGIME_LABEL } from "../strategy";
 import type { AppState, Observation } from "../types";
 
@@ -8,14 +9,37 @@ type Props = {
   onSave: (draft: Omit<Observation, "id" | "updatedAt"> & { id?: string }) => void;
   onDelete: (id: string) => void;
   onSetCurrent: (id: string) => void;
+  onImport: (raw: string) => boolean;
+  onClear: () => void;
 };
 
-export function RecordsPage({ state, onSave, onDelete, onSetCurrent }: Props) {
+export function RecordsPage({
+  state,
+  onSave,
+  onDelete,
+  onSetCurrent,
+  onImport,
+  onClear,
+}: Props) {
   const [editing, setEditing] = useState<Observation | null>(null);
   const [creating, setCreating] = useState(false);
-  const rows = [...state.observations].sort((a, b) =>
-    b.observedAt.localeCompare(a.observedAt),
-  );
+  const [symbol, setSymbol] = useState("all");
+  const symbols = [...new Set(state.observations.map((item) => item.symbol))].sort();
+  const rows = state.observations
+    .filter((item) => symbol === "all" || item.symbol === symbol)
+    .sort((a, b) =>
+      b.observedAt.localeCompare(a.observedAt),
+    );
+
+  function exportRecords() {
+    const data = JSON.stringify(state, null, 2);
+    const url = URL.createObjectURL(new Blob([data], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "observer-records.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <section className="page">
@@ -54,6 +78,47 @@ export function RecordsPage({ state, onSave, onDelete, onSetCurrent }: Props) {
         </div>
       ) : null}
 
+      <div className="records-tools">
+        <SymbolFilter symbols={symbols} value={symbol} onChange={setSymbol} includeAll />
+        <div className="data-actions">
+          <button className="btn ghost small" onClick={exportRecords} disabled={!state.observations.length}>
+            导出记录
+          </button>
+          <label className="btn ghost small file-btn">
+            导入记录
+            <input
+              type="file"
+              accept="application/json"
+              onChange={async (event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                const raw = await file.text();
+                event.target.value = "";
+                if (
+                  state.observations.length &&
+                  !window.confirm("导入会替换本机现有记录。请先导出备份，确认继续吗？")
+                ) {
+                  return;
+                }
+                const imported = onImport(raw);
+                if (!imported) window.alert("导入失败：请选择有效的观察者备份文件。");
+              }}
+            />
+          </label>
+          <button
+            className="btn ghost small danger"
+            onClick={() => {
+              if (window.confirm("清空会删除本机全部观察记录。请先导出备份，确认继续吗？")) {
+                onClear();
+              }
+            }}
+            disabled={!state.observations.length}
+          >
+            清空记录
+          </button>
+        </div>
+      </div>
+
       <div className="table-wrap">
         <table className="records">
           <thead>
@@ -67,13 +132,16 @@ export function RecordsPage({ state, onSave, onDelete, onSetCurrent }: Props) {
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.id} className={row.id === state.currentId ? "is-current" : ""}>
+              <tr
+                key={row.id}
+                className={row.id === state.currentIds[row.symbol] ? "is-current" : ""}
+              >
                 <td>{row.observedAt}</td>
                 <td>{row.symbol}</td>
                 <td>{REGIME_LABEL[row.regime]}</td>
                 <td>{LIQUIDITY_LABEL[row.liquidity]}</td>
                 <td className="row-actions">
-                  {row.id !== state.currentId ? (
+                  {row.id !== state.currentIds[row.symbol] ? (
                     <button className="btn ghost small" onClick={() => onSetCurrent(row.id)}>
                       设为当前
                     </button>
@@ -89,12 +157,26 @@ export function RecordsPage({ state, onSave, onDelete, onSetCurrent }: Props) {
                   >
                     编辑
                   </button>
-                  <button className="btn ghost small danger" onClick={() => onDelete(row.id)}>
+                  <button
+                    className="btn ghost small danger"
+                    onClick={() => {
+                      if (window.confirm(`删除 ${row.symbol} 在 ${row.observedAt} 的观察记录吗？`)) {
+                        onDelete(row.id);
+                      }
+                    }}
+                  >
                     删除
                   </button>
                 </td>
               </tr>
             ))}
+            {!rows.length ? (
+              <tr>
+                <td colSpan={5} className="empty-row">
+                  {symbol === "all" ? "还没有观察记录。" : `还没有 ${symbol} 的观察记录。`}
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>

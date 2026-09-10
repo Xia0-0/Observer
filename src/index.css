@@ -136,6 +136,54 @@ textarea {
   font-weight: 500;
 }
 
+.page-tools {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.symbol-filter {
+  min-width: 130px;
+}
+
+.records-tools {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.data-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.file-btn {
+  cursor: pointer;
+  color: var(--text);
+}
+
+.file-btn input {
+  display: none;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.empty-row {
+  color: var(--muted);
+  text-align: center !important;
+}
+
+.notes {
+  font-size: 13px;
+  font-style: italic;
+}
+
 .regime-banner {
   display: grid;
   grid-template-columns: 1fr 1.4fr;
@@ -378,5 +426,14 @@ textarea {
   }
   .main {
     padding: 24px;
+  }
+  .page-tools {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .records-tools {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

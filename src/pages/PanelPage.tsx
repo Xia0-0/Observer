@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { SymbolFilter } from "../components/SymbolFilter";
 import { LIQUIDITY_LABEL, REGIME_LABEL, STRATEGY } from "../strategy";
 import type { AppState } from "../types";
 
@@ -7,14 +9,23 @@ type Props = {
 };
 
 export function PanelPage({ state }: Props) {
-  const current = state.observations.find((o) => o.id === state.currentId);
+  const symbols = [...new Set(state.observations.map((item) => item.symbol))].sort();
+  const [selectedSymbol, setSelectedSymbol] = useState("");
+  const symbol = symbols.includes(selectedSymbol) ? selectedSymbol : (symbols[0] ?? "");
+
+  const current = state.observations.find((item) => item.id === state.currentIds[symbol]);
 
   if (!current) {
     return (
       <section className="page">
         <header className="page-head">
-          <h2>观察面板</h2>
-          <p>还没有当前观察。</p>
+          <div>
+            <h2>观察面板</h2>
+            <p>{symbol ? `${symbol} 还没有当前观察。` : "还没有当前观察。"}</p>
+          </div>
+          {symbols.length ? (
+            <SymbolFilter symbols={symbols} value={symbol} onChange={setSelectedSymbol} />
+          ) : null}
         </header>
         <div className="empty-card">
           <p>先写一条市场观察，面板才会给出对应纪律。</p>
@@ -35,7 +46,10 @@ export function PanelPage({ state }: Props) {
           <p className="eyebrow">当前市场状况</p>
           <h2>{current.symbol}</h2>
         </div>
-        <time dateTime={current.observedAt}>{current.observedAt}</time>
+        <div className="page-tools">
+          <SymbolFilter symbols={symbols} value={symbol} onChange={setSelectedSymbol} />
+          <time dateTime={current.observedAt}>{current.observedAt}</time>
+        </div>
       </header>
 
       <div className={`regime-banner regime-${current.regime}`}>
